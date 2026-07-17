@@ -1,0 +1,27 @@
+theme = iTerm2 Solarized Light
+
+# Treat the macOS Option key as Alt/Meta so Alt+Backspace (delete word),
+# Alt+f/Alt+b, etc. send proper escape sequences to TUI apps like Claude Code.
+macos-option-as-alt = true
+
+# Make Ctrl-based line editing work under non-Latin (Russian) keyboard
+# layouts. Bind PHYSICAL letter keys (KeyX — layout-independent) to always
+# emit the raw control bytes that the line editor in Claude Code / readline
+# reads. These are the same bytes a Latin layout already sends, so shell
+# behaviour is unchanged — this only makes the Russian layout match English.
+# Bytes: A=01 start, E=05 end, B=02 back, F=06 fwd, W=17 del-word,
+#        U=15 kill-to-start, K=0b kill-to-end.
+keybind = ctrl+KeyA=text:\x01
+keybind = ctrl+KeyE=text:\x05
+keybind = ctrl+KeyB=text:\x02
+keybind = ctrl+KeyF=text:\x06
+keybind = ctrl+KeyW=text:\x17
+keybind = ctrl+KeyU=text:\x15
+keybind = ctrl+KeyK=text:\x0b
+
+# Same fix for Alt-based word movement (Alt+b back-word, Alt+f fwd-word):
+# readline/Claude Code read the escape sequences ESC b / ESC f, but under a
+# Russian layout Alt+KeyB/KeyF don't type "b"/"f" so the escape body was
+# wrong. Bind the PHYSICAL keys so it matches English regardless of layout.
+keybind = alt+KeyB=text:\x1bb
+keybind = alt+KeyF=text:\x1bf
