@@ -45,6 +45,7 @@ bash claude-tab-resume/install.sh
 | ⌘N / ⌘Т | new session in the current directory |
 | ⌘⌥⇧N | new session in `$HOME` |
 | ⌘B / ⌘И | new tab with a fork of this pane's Claude session |
+| ⌘D / ⌘В | new tab in the same directory running a fresh `claude` |
 | ⌘] / ⌘Ъ | focus the right pane (opens the split if there isn't one) |
 | ⌘R / ⌘К | rename the session |
 | ⌘⇧O / ⌘⇧Щ | open the selected path/URL with `open` |
