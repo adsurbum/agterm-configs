@@ -36,7 +36,7 @@ bash claude-tab-resume/install.sh
 | `config-agterm/scripts/` | scripts behind the shortcuts | `~/.config/agterm/scripts/` |
 | `config-ghostty/config` | global ghostty config | `~/.config/ghostty/config` |
 | `app-support/` | theme, scroll, right-click | `~/Library/Application Support/agterm/` |
-| `claude-tab-resume/` | hooks + zshrc for ⌘B & auto-resume | `~/.claude/`, `~/.zshrc` |
+| `claude-tab-resume/` | hooks + status line + zshrc for ⌘B & auto-resume | `~/.claude/`, `~/.zshrc` |
 
 ## Shortcuts (English / Russian layout)
 
@@ -68,6 +68,14 @@ quick terminal, workspace, flag, search, dashboard.
 - `claude-tab-resume/install.sh` is idempotent: it merges hook entries into
   `~/.claude/settings.json` WITHOUT touching your other hooks (backup `.bak`), and
   appends the `~/.zshrc` blocks by marker so re-running never duplicates them.
+- The status line is load-bearing, not decoration: it writes
+  `~/.claude/agterm-tab-map/<tab>.<pane>` (+ `.transcript`) on every frame, which
+  is where ⌘B and the auto-resume read the conversation id from. It runs only for
+  an interactive TUI session, so the map always matches the id shown on screen and
+  headless `claude -p` runs can't claim a pane. The `SessionStart` hook writes the
+  same file, covering the frames before the first render. If you already have your
+  own `statusLine` in `settings.json` the installer keeps it and tells you to port
+  the map-writing block over.
 - agterm's "Restore running commands on restart" setting must stay OFF — the tab
   auto-resume system replaces it and must not depend on it.
 

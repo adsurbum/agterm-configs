@@ -3,7 +3,7 @@
 # и зависимости для ⌘B (форк Claude). Запускать НА НОВОМ компе:
 #   bash claude-tab-resume/install.sh
 #
-# Ставит: 2 хука в ~/.claude/hooks, hook-записи в ~/.claude/settings.json,
+# Ставит: 2 хука в ~/.claude/hooks, статуслайн, записи в ~/.claude/settings.json,
 # обёртку claude() и автозапуск в ~/.zshrc. Всё идемпотентно — повторный запуск
 # ничего не дублирует. Пути берутся из $HOME текущего пользователя.
 set -euo pipefail
@@ -15,7 +15,23 @@ cp "$HERE/hooks/agterm-tab-map.sh" "$HERE/hooks/agterm-tab-unmap.sh" "$HOME/.cla
 chmod +x "$HOME/.claude/hooks/agterm-tab-map.sh" "$HOME/.claude/hooks/agterm-tab-unmap.sh"
 echo "✓ хуки скопированы в ~/.claude/hooks"
 
-# --- 2. settings.json: вмержить hook-записи (идемпотентно) -------------------
+# --- 1b. статуслайн ----------------------------------------------------------
+# Не только рисует строку: он же пишет per-pane map (session_id + путь к
+# транскрипту) на каждом кадре — то есть это ОСНОВНОЙ источник id для ⌘B и
+# авто-резюме, а SessionStart-хук лишь закрывает первые кадры. Без него карта
+# отстаёт от /clear, --resume, --fork-session. Чужой статуслайн не затираем
+# молча — бэкап в .bak.
+SL="$HOME/.claude/statusline-command.sh"
+if [ -f "$SL" ] && ! cmp -s "$SL" "$HERE/statusline-command.sh"; then
+  cp "$SL" "$SL.bak"
+  echo "  прежний statusline-command.sh сохранён как statusline-command.sh.bak"
+fi
+cp "$HERE/statusline-command.sh" "$SL"
+chmod +x "$SL"
+command -v jq >/dev/null 2>&1 || echo "⚠️  jq не найден — статуслайну он нужен: brew install jq"
+echo "✓ statusline-command.sh скопирован в ~/.claude"
+
+# --- 2. settings.json: вмержить hook-записи + statusLine (идемпотентно) ------
 python3 - "$HOME" <<'PY'
 import json, os, sys
 home = sys.argv[1]
@@ -45,14 +61,26 @@ def ensure(event, script):
 
 a = ensure("SessionStart", "agterm-tab-map.sh")
 b = ensure("SessionEnd", "agterm-tab-unmap.sh")
-if a or b:
+
+# statusLine ставим только если его нет: свой кастомный статуслайн у человека
+# важнее нашего, а pane-map тогда останется на одном SessionStart-хуке.
+c = False
+if not s.get("statusLine"):
+    s["statusLine"] = {"type": "command", "command": "bash ~/.claude/statusline-command.sh"}
+    c = True
+elif "statusline-command.sh" not in json.dumps(s["statusLine"]):
+    print("⚠️  в settings.json уже есть свой statusLine — оставляю его. Чтобы ⌘B")
+    print("    получал id как в статуслайне, перенеси в него блок записи pane-map")
+    print("    из ~/.claude/statusline-command.sh.")
+
+if a or b or c:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     if os.path.exists(path):
         import shutil; shutil.copy(path, path + ".bak")
     with open(path, "w") as f: json.dump(s, f, indent=2, ensure_ascii=False)
-    print("✓ hook-записи добавлены в ~/.claude/settings.json (бэкап .bak)")
+    print("✓ записи добавлены в ~/.claude/settings.json (бэкап .bak)")
 else:
-    print("✓ hook-записи уже были на месте — пропущено")
+    print("✓ записи уже были на месте — пропущено")
 PY
 
 # --- 3. ~/.zshrc: обёртка claude() + автозапуск (идемпотентно) ---------------
@@ -79,5 +107,6 @@ fi
 
 echo
 echo "✅ Готово. Открой НОВЫЙ таб/сессию (или source ~/.zshrc), чтобы применилось."
-echo "   Проверка: в agterm-сессии с запущенным claude появится файл"
-echo "   ~/.claude/agterm-tab-map/<session-id>.<pane>."
+echo "   Проверка: в agterm-сессии с запущенным claude появятся файлы"
+echo "   ~/.claude/agterm-tab-map/<session-id>.<pane> и .<pane>.transcript,"
+echo "   а id в них совпадёт с коротким id в статуслайне."

@@ -26,6 +26,6 @@ case "${reason:-}" in
 esac
 map="$HOME/.claude/agterm-tab-map/$AGTERM_SESSION_ID.${AGTERM_PANE:-left}"
 if [ -f "$map" ] && [ "$(cat "$map")" = "$sid" ]; then
-  rm -f "$map"
+  rm -f "$map" "$map.transcript"
 fi
 exit 0
