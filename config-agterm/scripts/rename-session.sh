@@ -11,3 +11,8 @@ text returned of r
 end try") || exit 0
 
 [ -n "$NEW" ] && "$A" session rename "$NEW" --target "$AGT_SESSION_ID" --socket "$AGT_SOCKET"
+
+# Переименование меняет ярлык в сайдбаре — укоротить длинное имя, чтобы влезло
+# (ширину сайдбара agterm по сокету менять не даёт).
+FIT="$HOME/.config/agterm/scripts/fit-sidebar.sh"
+[ -x "$FIT" ] && "$FIT" >/dev/null 2>&1

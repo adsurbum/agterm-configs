@@ -25,12 +25,13 @@ echo "Homebrew prefix: $PREFIX"
 mkdir -p "$HOME/.config/agterm/scripts"
 cp "$HERE/config-agterm/keymap.conf" "$HOME/.config/agterm/keymap.conf"
 cp "$HERE/config-agterm/scripts/"*.sh "$HOME/.config/agterm/scripts/"
-chmod +x "$HOME/.config/agterm/scripts/"*.sh
+cp "$HERE/config-agterm/scripts/"*.py "$HOME/.config/agterm/scripts/"
+chmod +x "$HOME/.config/agterm/scripts/"*.sh "$HOME/.config/agterm/scripts/"*.py
 
 # подставить локальный префикс homebrew вместо /opt/homebrew везде
 if [ "$PREFIX" != "/opt/homebrew" ]; then
   echo "Заменяю /opt/homebrew → $PREFIX в keymap и скриптах…"
-  for f in "$HOME/.config/agterm/keymap.conf" "$HOME/.config/agterm/scripts/"*.sh; do
+  for f in "$HOME/.config/agterm/keymap.conf" "$HOME/.config/agterm/scripts/"*.sh "$HOME/.config/agterm/scripts/"*.py; do
     sed -i '' "s#/opt/homebrew#$PREFIX#g" "$f"
   done
 fi
@@ -61,6 +62,23 @@ fi
 if command -v agtermctl >/dev/null 2>&1; then
   agtermctl keymap reload >/dev/null 2>&1 && echo "keymap перезагружен." || \
     echo "keymap скопирован; применится при следующем запуске agterm (или File ▸ Reload Keymap)."
+fi
+
+# --- 6. launchd-агент авто-подгонки ширины сайдбара --------------------------
+# Опрашивает дерево и держит sidebarWidth подогнанным под самый длинный ярлык.
+# Нужен, потому что inline-переименование (даблклик) не проходит через хуки.
+LA="$HOME/Library/LaunchAgents"
+LABEL="com.iliakohanovski.agterm-fit-sidebar"
+mkdir -p "$LA"
+sed "s#__HOME__#$HOME#g" "$HERE/config-agterm/launchd/$LABEL.plist" > "$LA/$LABEL.plist"
+GUI="gui/$(id -u)"
+launchctl bootout "$GUI/$LABEL" 2>/dev/null || true
+if launchctl bootstrap "$GUI" "$LA/$LABEL.plist" 2>/dev/null; then
+  echo "✓ launchd-агент авто-ширины сайдбара загружен ($LABEL)"
+else
+  launchctl load -w "$LA/$LABEL.plist" 2>/dev/null \
+    && echo "✓ launchd-агент авто-ширины сайдбара загружен (load -w)" \
+    || echo "⚠️  не смог загрузить launchd-агент — вручную: launchctl bootstrap $GUI $LA/$LABEL.plist"
 fi
 
 echo
