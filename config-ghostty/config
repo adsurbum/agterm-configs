@@ -4,13 +4,16 @@ theme = iTerm2 Solarized Light
 # Alt+f/Alt+b, etc. send proper escape sequences to TUI apps like Claude Code.
 macos-option-as-alt = true
 
-# Make Ctrl-based line editing work under non-Latin (Russian) keyboard
-# layouts. Bind PHYSICAL letter keys (KeyX — layout-independent) to always
-# emit the raw control bytes that the line editor in Claude Code / readline
-# reads. These are the same bytes a Latin layout already sends, so shell
-# behaviour is unchanged — this only makes the Russian layout match English.
-# Bytes: A=01 start, E=05 end, B=02 back, F=06 fwd, W=17 del-word,
+# Make Ctrl-based line editing and interrupt work under non-Latin (Russian)
+# keyboard layouts. Bind PHYSICAL letter keys (KeyX — layout-independent) to
+# always emit the raw control bytes that the line editor in Claude Code /
+# readline reads. These are the same bytes a Latin layout already sends, so
+# shell behaviour is unchanged — this only makes the Russian layout match
+# English.
+# Bytes: C=03 interrupt (SIGINT via the tty line discipline),
+#        A=01 start, E=05 end, B=02 back, F=06 fwd, W=17 del-word,
 #        U=15 kill-to-start, K=0b kill-to-end.
+keybind = ctrl+KeyC=text:\x03
 keybind = ctrl+KeyA=text:\x01
 keybind = ctrl+KeyE=text:\x05
 keybind = ctrl+KeyB=text:\x02
