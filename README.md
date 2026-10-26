@@ -69,7 +69,7 @@ from the repo is reported.
 | ⌘N | new session in the current directory |
 | ⌘⌥⇧N | new session in `$HOME` |
 | ⌘B | new tab with a fork of this pane's Claude session |
-| ⌘D | new tab in the same directory running a fresh `claude` |
+| ⌘D | new tab in the same directory running a fresh `claude` — instant when a pre-started spare for that directory is waiting in the `spares` workspace (kept for the last 3 directories, see `claude-spare.py`) |
 | ⌘] | focus the right pane (opens the split if there isn't one) |
 | ⌘\ | focus the left pane and toggle the split |
 | ⌘R | rename the session |

@@ -10,7 +10,7 @@
 # session. Print mode also skips the auto-resume injection: a manual
 # `claude -p "q"` in a mapped pane must not append turns to the pane's session.
 claude() {
-  local name="$(basename "$PWD")"
+  local name="${PWD:t}"
   local resume="" bare_r=0 headless=0 skip_map=0
   local -a out
   local cur
