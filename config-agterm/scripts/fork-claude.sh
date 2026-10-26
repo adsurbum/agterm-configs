@@ -44,15 +44,25 @@ print(s.strip())
 ')
 LABEL="fork: $BASE $(date +%H:%M)"
 
-# Без `--name`: имя, заданное в agterm, закрепляется и перестаёт следовать за
-# заголовком терминала — тогда /rename внутри форка не меняет таб. Таб берёт
-# имя из заголовка, а заголовок пишет Claude (--name ниже).
-NEW=$("$AGTERMCTL" session new --cwd "$AGT_SESSION_PWD" --after "$AGT_SESSION_ID") || exit 1
+case "$SID" in
+  *[!0-9a-fA-F-]*|"") "$AGTERMCTL" notify "Битый id Claude-сессии в карте панели" --title "Fork Claude"
+                      exit 0 ;;
+esac
 
-# Дать новому шеллу подняться, затем впечатать команду. `session type` шлёт
-# Return только за newline в тексте — поэтому \n в конце обязателен.
-# `--name` перехватывает zshrc-обёртка claude() и подставляет вместо дефолтного
-# basename $PWD — так форк сразу получает своё имя, без /rename внутри TUI.
-sleep 1.2
-printf 'claude --resume %s --fork-session --name "%s"\n' "$SID" "$LABEL" |
-  "$AGTERMCTL" session type --stdin --target "$NEW"
+# Команду форка кладём во временный файл, а таб запускаем с --command (как ⌘D):
+# не нужно ждать, пока поднимется шелл, чтобы впечатать её (раньше sleep 1.2).
+# LABEL — из имени таба, а его может выставить удалённая программа через OSC,
+# поэтому в файл он идёт в одинарных кавычках (' → '\''), без подстановок.
+# Файл удаляет сам себя первой строкой. `--name` перехватывает zshrc-обёртка
+# claude() и подставляет вместо дефолтного basename $PWD — так форк сразу
+# получает своё имя, без /rename внутри TUI. `exec zsh -l` — чтобы после выхода
+# из claude таб не закрылся, а упал в обычный шелл (см. new-claude.sh).
+RUN=$(mktemp -t fork-claude) || exit 1
+QLABEL=$(printf '%s' "$LABEL" | sed "s/'/'\\\\''/g")
+printf "rm -f -- '%s'\nclaude --resume %s --fork-session --name '%s'\n" "$RUN" "$SID" "$QLABEL" > "$RUN"
+
+# Без `--name` у session new: имя, заданное в agterm, закрепляется и перестаёт
+# следовать за заголовком терминала — тогда /rename внутри форка не меняет таб.
+# Таб берёт имя из заголовка, а заголовок пишет Claude (--name выше).
+"$AGTERMCTL" session new --cwd "$AGT_SESSION_PWD" --after "$AGT_SESSION_ID" \
+  --command "zsh -lic '. $RUN; exec zsh -l'" >/dev/null || { rm -f "$RUN"; exit 1; }
