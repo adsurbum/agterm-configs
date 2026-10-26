@@ -28,3 +28,8 @@ keybind = ctrl+KeyK=text:\x0b
 # wrong. Bind the PHYSICAL keys so it matches English regardless of layout.
 keybind = alt+KeyB=text:\x1bb
 keybind = alt+KeyF=text:\x1bf
+
+# Drop ghostty's default ⇧⌘J (write_screen_file:paste). agterm uses ⇧⌘J to
+# hide/show overlays; with no overlay open the key fell through to ghostty and
+# pasted a temp-file path into the prompt.
+keybind = super+shift+j=unbind
