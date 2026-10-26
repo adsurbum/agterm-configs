@@ -42,23 +42,26 @@ bash shell-speedup/install.sh
 | `claude-tab-resume/` | hooks + status line + zshrc for ⌘B & auto-resume | `~/.claude/`, `~/.zshrc` |
 | `shell-speedup/` | in-place edits that speed up zsh startup (see below) | `~/.zshrc`, `~/.zprofile` |
 
-## Shortcuts (English / Russian layout)
+## Shortcuts
 
 | Keys | Action |
 |------|--------|
-| ⌘N / ⌘Т | new session in the current directory |
+| ⌘N | new session in the current directory |
 | ⌘⌥⇧N | new session in `$HOME` |
-| ⌘B / ⌘И | new tab with a fork of this pane's Claude session |
-| ⌘D / ⌘В | new tab in the same directory running a fresh `claude` |
-| ⌘] / ⌘Ъ | focus the right pane (opens the split if there isn't one) |
-| ⌘R / ⌘К | rename the session |
-| ⌘⇧O / ⌘⇧Щ | open the selected path/URL with `open` |
-| ⌘⇧H / ⌘⇧Р | show the selection (or the whole screen) with correct RTL order (Hebrew) |
-| ⌘T / ⌘Е | toggle theme (Solarized Dark ↔ Light) |
-| ⌘Ц | close tab (Russian-layout twin of ⌘W, honoring overlay/quick/zoom) |
+| ⌘B | new tab with a fork of this pane's Claude session |
+| ⌘D | new tab in the same directory running a fresh `claude` |
+| ⌘] | focus the right pane (opens the split if there isn't one) |
+| ⌘\ | focus the left pane and toggle the split |
+| ⌘R | rename the session |
+| ⌘⇧O | open the selected path/URL with `open` |
+| ⌘⇧H | show the selection (or the whole screen) with correct RTL order (Hebrew) |
+| ⌘T | toggle theme (Solarized Dark ↔ Light) |
+| ⌃⇧] / ⌃⇧[ | next / previous session with an agent status |
+| ⌥⇧] / ⌥⇧[ | next / previous flagged session |
+| ⌥F | toggle the flag on the current session |
 
-Plus Russian-layout twins for the built-ins: session navigation, split, scratch,
-quick terminal, workspace, flag, search, dashboard.
+Since agterm 0.38 a Latin chord also fires under the Russian layout, so the
+keymap no longer carries Cyrillic `(ru)` duplicates.
 
 ## Dependencies
 

@@ -1,4 +1,5 @@
 {
   "inheritGlobalGhosttyConfig" : true,
+  "restoreMode" : "none",
   "theme" : "iTerm2 Solarized Light"
 }
