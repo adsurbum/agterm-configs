@@ -31,6 +31,26 @@ bash shell-speedup/install.sh
 # 6. Restart agterm so the menu shortcuts are picked up
 ```
 
+## Update a Mac that's already set up
+
+```sh
+cd agterm-configs
+git pull
+bash install.sh                     # keymap, scripts, ghostty, theme
+bash claude-tab-resume/install.sh   # only if hooks/status line/zshrc blocks changed
+bash shell-speedup/install.sh       # only once per machine; re-running is a no-op
+```
+
+Every installer is safe to re-run. `install.sh` won't silently clobber local
+edits: it keeps a hash manifest of what it installed last time
+(`~/.config/agterm/.installed.sha256`) and overwrites the keymap, a script or
+the ghostty config only if the live file matches the repo or is unchanged since
+the last install. Otherwise it stops and lists the files with a `diff` command
+for each — move the edits you want into the repo (commit + push), then re-run.
+`bash install.sh --force` overwrites anyway, backing each such file up to `.bak`.
+The first run on a machine has no manifest yet, so any live file that differs
+from the repo is reported.
+
 ## What's in the repo
 
 | Path | What | Installs to |
@@ -72,7 +92,9 @@ keymap no longer carries Cyrillic `(ru)` duplicates.
 ## Notes
 
 - `install.sh` overwrites an existing `~/.config/ghostty/config` (the old one is
-  backed up as `config.bak`).
+  backed up as `config.bak`) — but only after the local-edit check above passes.
+  `app-support/` files (theme, restore mode) are copied without that check: ⌘T
+  rewrites the theme there all the time.
 - `claude-tab-resume/install.sh` is idempotent: it merges hook entries into
   `~/.claude/settings.json` WITHOUT touching your other hooks (backup `.bak`), and
   appends the `~/.zshrc` blocks by marker so re-running never duplicates them.

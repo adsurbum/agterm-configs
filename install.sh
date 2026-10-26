@@ -21,6 +21,64 @@ fi
 PREFIX="$(brew --prefix 2>/dev/null || echo /opt/homebrew)"
 echo "Homebrew prefix: $PREFIX"
 
+# --- 0. защита локальных правок ------------------------------------------------
+# install.sh перезаписывает keymap, скрипты и ghostty config. Если живой файл
+# правили на этом компе и не перенесли в репо — правка молча пропала бы.
+# Поэтому храним манифест хешей того, что ставили в прошлый раз. Живой файл
+# перезаписываем, только если он совпадает с репо или не менялся с прошлой
+# установки; иначе — стоп со списком (или --force: бэкап в .bak и перезапись).
+FORCE=0
+[ "${1:-}" = "--force" ] && FORCE=1
+MANIFEST="$HOME/.config/agterm/.installed.sha256"
+
+# «файл в репо|куда ставится|подставлять ли префикс brew»
+GUARDED=("$HERE/config-agterm/keymap.conf|$HOME/.config/agterm/keymap.conf|1")
+for f in "$HERE/config-agterm/scripts/"*.sh "$HERE/config-agterm/scripts/"*.py; do
+  GUARDED+=("$f|$HOME/.config/agterm/scripts/$(basename "$f")|1")
+done
+GUARDED+=("$HERE/config-ghostty/config|$HOME/.config/ghostty/config|0")
+
+sha() { shasum -a 256 | cut -d' ' -f1; }
+expected_sha() {  # хеш файла из репо в том виде, в каком он встанет на этот комп
+  if [ "$2" = 1 ] && [ "$PREFIX" != "/opt/homebrew" ]; then
+    sed "s#/opt/homebrew#$PREFIX#g" "$1" | sha
+  else
+    sha < "$1"
+  fi
+}
+recorded_sha() { [ -f "$MANIFEST" ] && awk -F'  ' -v p="$1" '$2 == p { print $1 }' "$MANIFEST" || true; }
+
+CONFLICTS=()
+for g in "${GUARDED[@]}"; do
+  IFS='|' read -r src dst sub <<<"$g"
+  [ -f "$dst" ] || continue
+  live="$(sha < "$dst")"
+  [ "$live" = "$(expected_sha "$src" "$sub")" ] && continue
+  [ "$live" = "$(recorded_sha "$dst")" ] && continue
+  CONFLICTS+=("$src|$dst")
+done
+
+if [ ${#CONFLICTS[@]} -gt 0 ]; then
+  echo
+  echo "⚠️  Эти файлы изменены на этом компе и отличаются от репо:"
+  for c in "${CONFLICTS[@]}"; do
+    IFS='|' read -r src dst <<<"$c"
+    echo "   $dst"
+    echo "      diff \"$src\" \"$dst\""
+  done
+  if [ "$FORCE" = 0 ]; then
+    echo
+    echo "Нужные локальные правки сначала перенеси в репо (закоммить и запушь), потом запусти снова."
+    echo "Перезаписать всё равно (с бэкапом каждого файла в .bak): bash install.sh --force"
+    exit 1
+  fi
+  for c in "${CONFLICTS[@]}"; do
+    IFS='|' read -r src dst <<<"$c"
+    cp "$dst" "$dst.bak"
+    echo "   бэкап: $dst.bak"
+  done
+fi
+
 # --- 1. ~/.config/agterm (keymap + scripts) ----------------------------------
 mkdir -p "$HOME/.config/agterm/scripts"
 cp "$HERE/config-agterm/keymap.conf" "$HOME/.config/agterm/keymap.conf"
@@ -45,6 +103,14 @@ if [ -f "$HOME/.config/ghostty/config" ]; then
   echo "Старый ~/.config/ghostty/config сохранён как config.bak"
 fi
 cp "$HERE/config-ghostty/config" "$HOME/.config/ghostty/config"
+
+# запомнить, что поставили, — по этому манифесту следующий запуск отличит
+# «обновление из репо» от «локальной правки» (см. шаг 0)
+: > "$MANIFEST"
+for g in "${GUARDED[@]}"; do
+  IFS='|' read -r src dst sub <<<"$g"
+  [ -f "$dst" ] && printf '%s  %s\n' "$(sha < "$dst")" "$dst" >> "$MANIFEST"
+done
 
 # --- 3. app-support (тема, мышь, inheritGlobalGhosttyConfig) ------------------
 AS="$HOME/Library/Application Support/agterm"
